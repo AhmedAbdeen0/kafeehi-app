@@ -116,7 +116,7 @@ export function AppProvider({ children }) {
             id: String(o.id),
             type: 'customer',
             tableNumber: o.tableNumber,
-            status: o.status,
+            status: String(o.status || 'pending').toLowerCase(),
             customerId: String(o.customerId || o.userId || o.customer?.id || o.user?.id || ''),
             customerName: o.customerName || o.userName || o.customer?.name || o.user?.name || 'زبون',
             timestamp: o.createdAt ? new Date(o.createdAt) : new Date(),
@@ -401,7 +401,7 @@ export function AppProvider({ children }) {
         customerName,
         items: cartItems,
         total,
-        status: res.status || 'pending',
+        status: String(res.status || 'pending').toLowerCase(),
         timestamp: new Date(),
       }
 
