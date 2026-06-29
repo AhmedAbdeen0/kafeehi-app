@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "http://coffeesystem.tryasp.net/api/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
