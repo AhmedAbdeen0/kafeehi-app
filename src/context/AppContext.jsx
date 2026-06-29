@@ -33,6 +33,7 @@ export function AppProvider({ children }) {
   const [invoiceCounter, setInvoiceCounter] = useState(initial.invoiceCounter || 1)
   const [toasts, setToasts] = useState([])
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark')
+  const [syncError, setSyncError] = useState(null)
 
   const { user } = useAuth()
 
@@ -88,8 +89,9 @@ export function AppProvider({ children }) {
       }
     } catch (err) {
       console.error('Failed to fetch drinks from API:', err)
+      addToast(`فشل تحميل قائمة المشروبات: ${err.message}`, 'error')
     }
-  }, [])
+  }, [addToast])
 
   const fetchInventory = useCallback(async () => {
     try {
@@ -103,13 +105,15 @@ export function AppProvider({ children }) {
       }
     } catch (err) {
       console.error('Failed to fetch inventory from API:', err)
+      addToast(`فشل تحميل المخزن: ${err.message}`, 'error')
     }
-  }, [])
+  }, [addToast])
 
   const fetchPendingOrders = useCallback(async () => {
     try {
       const data = await api.get('/api/order/customer/pending')
       if (data) {
+        setSyncError(null)
         const mapped = data.map(o => {
           const orderItems = o.items || [];
           return {
@@ -154,8 +158,14 @@ export function AppProvider({ children }) {
       }
     } catch (err) {
       console.error('Failed to fetch pending customer orders:', err);
+      setSyncError((prev) => {
+        if (prev !== err.message) {
+          addToast(`فشل مزامنة طلبات الزبائن: ${err.message}`, 'error')
+        }
+        return err.message
+      })
     }
-  }, [])
+  }, [addToast])
 
   useEffect(() => {
     if (user) {
