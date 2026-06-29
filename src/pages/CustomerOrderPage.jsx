@@ -27,7 +27,7 @@ export default function CustomerOrderPage() {
   )
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0)
   const myOrders = useMemo(
-    () => orders.filter((o) => o.type === 'customer' && o.customerId === user.id).slice().reverse(),
+    () => orders.filter((o) => o.type === 'customer' && String(o.customerId) === String(user.id)).slice().reverse(),
     [orders, user.id]
   )
   const activeOrders = useMemo(

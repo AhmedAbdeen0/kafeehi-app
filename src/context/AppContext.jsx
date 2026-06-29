@@ -110,22 +110,25 @@ export function AppProvider({ children }) {
     try {
       const data = await api.get('/api/order/customer/pending')
       if (data) {
-        const mapped = data.map(o => ({
-          id: String(o.id),
-          type: 'customer',
-          tableNumber: o.tableNumber,
-          status: o.status,
-          customerId: o.customerId || o.userId || o.customer?.id || o.user?.id,
-          customerName: o.customerName || o.userName || o.customer?.name || o.user?.name,
-          timestamp: new Date(o.createdAt),
-          items: o.items.map(item => ({
-            id: String(item.idDrink),
-            name: item.name,
-            price: item.price,
-            qty: item.qty
-          })),
-          total: o.items.reduce((sum, item) => sum + item.price * item.qty, 0)
-        }));
+        const mapped = data.map(o => {
+          const orderItems = o.items || [];
+          return {
+            id: String(o.id),
+            type: 'customer',
+            tableNumber: o.tableNumber,
+            status: o.status,
+            customerId: String(o.customerId || o.userId || o.customer?.id || o.user?.id || ''),
+            customerName: o.customerName || o.userName || o.customer?.name || o.user?.name || 'زبون',
+            timestamp: o.createdAt ? new Date(o.createdAt) : new Date(),
+            items: orderItems.map(item => ({
+              id: String(item.idDrink || item.id),
+              name: item.name,
+              price: Number(item.price || 0),
+              qty: Number(item.qty || 0)
+            })),
+            total: orderItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0)
+          };
+        });
         setOrders((prev) => {
           // Keep track of active customer orders in prev that did not come back in mapped.
           // Since they are no longer in the pending list on the server, they must have been completed or cancelled.
@@ -474,7 +477,7 @@ export function AppProvider({ children }) {
   }, [addToast])
 
   const getCustomerOrders = useCallback((customerId) => {
-    return orders.filter((o) => o.type === 'customer' && o.customerId === customerId)
+    return orders.filter((o) => o.type === 'customer' && String(o.customerId) === String(customerId))
   }, [orders])
 
   const getPendingCustomerOrders = useCallback(() => {
