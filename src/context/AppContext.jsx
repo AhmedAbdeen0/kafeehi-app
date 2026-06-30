@@ -66,6 +66,27 @@ function parseCustomerName(o) {
   return 'زبون';
 }
 
+function getClearedOrderIds() {
+  try {
+    return JSON.parse(localStorage.getItem('kafeehi_cleared_orders') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function addClearedOrderId(orderId) {
+  try {
+    const current = getClearedOrderIds();
+    const idStr = String(orderId);
+    if (!current.includes(idStr)) {
+      current.push(idStr);
+      localStorage.setItem('kafeehi_cleared_orders', JSON.stringify(current));
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 function getInitialState() {
   const saved = loadState()
   if (saved) {
@@ -171,10 +192,13 @@ export function AppProvider({ children }) {
       const data = await api.get('/api/order/customer/pending')
       if (data) {
         setSyncError(null)
-        const mapped = data.map(o => {
-          const orderItems = o.items || [];
-          return {
-            id: String(o.id),
+        const clearedIds = getClearedOrderIds();
+        const mapped = data
+          .filter(o => !clearedIds.includes(String(o.id)))
+          .map(o => {
+            const orderItems = o.items || [];
+            return {
+              id: String(o.id),
             type: 'customer',
             tableNumber: o.tableNumber,
             status: String(o.status || 'pending').toLowerCase(),
@@ -502,6 +526,7 @@ export function AppProvider({ children }) {
     if (amountPaid < order.total) return { success: false, error: 'insufficient_payment' }
 
     try {
+      addClearedOrderId(orderId)
       await api.put(`/api/order/customer/${orderId}/status`, {
         status: 'Completed'
       })
@@ -532,6 +557,7 @@ export function AppProvider({ children }) {
 
   const cancelCustomerOrder = useCallback(async (orderId) => {
     try {
+      addClearedOrderId(orderId)
       const res = await api.put(`/api/order/customer/${orderId}/status`, { status: 'Cancelled' })
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId || o._id === orderId ? { ...o, status: 'cancelled' } : o))
@@ -562,12 +588,14 @@ export function AppProvider({ children }) {
     if (!window.confirm('هل أنت متأكد من مسح جميع الفواتير المحلية المسجلة؟')) return
     setOrders([])
     setInvoiceCounter(1)
+    localStorage.removeItem('kafeehi_cleared_orders')
     addToast('تم مسح الفواتير المحلية بنجاح', 'success')
   }, [addToast])
 
   const resetData = useCallback(() => {
     if (!window.confirm('هل أنت متأكد من إعادة ضبط كل البيانات؟')) return
     clearState()
+    localStorage.removeItem('kafeehi_cleared_orders')
     setDrinks([])
     setInventory([])
     setOrders([])

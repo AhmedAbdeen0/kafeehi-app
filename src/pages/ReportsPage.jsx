@@ -48,6 +48,149 @@ const months = [
 
 const years = [2026, 2025, 2024]
 
+function CustomTrendChart({ filter, orders, drinks }) {
+  const chartData = useMemo(() => {
+    if (filter === 'today') {
+      const hourly = {}
+      orders.forEach((o) => {
+        const date = new Date(o.timestamp)
+        const hour = date.getHours()
+        if (!hourly[hour]) {
+          hourly[hour] = { label: `${hour === 12 ? 12 : hour % 12} ${hour >= 12 ? 'م' : 'ص'}`, sales: 0, profit: 0, orderCount: 0 }
+        }
+        hourly[hour].sales += o.total
+        hourly[hour].orderCount += 1
+        
+        const orderProfit = o.items.reduce((ps, item) => {
+          const drink = drinks.find((d) => d.id === item.id)
+          const cost = drink ? drink.ingredientCost : 0
+          return ps + (item.price - cost) * item.qty
+        }, 0)
+        hourly[hour].profit += orderProfit
+      })
+      
+      return Object.keys(hourly)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map((h) => ({
+          label: hourly[h].label,
+          sales: hourly[h].sales,
+          profit: hourly[h].profit,
+          orderCount: hourly[h].orderCount
+        }))
+    }
+    
+    if (filter === 'week') {
+      const arabicDays = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+      const weekly = {}
+      const now = new Date()
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date()
+        d.setDate(now.getDate() - i)
+        const dayIdx = d.getDay()
+        const dayName = arabicDays[dayIdx]
+        const key = d.toDateString()
+        weekly[key] = { label: dayName, sales: 0, profit: 0, orderCount: 0, order: 7 - i }
+      }
+      
+      orders.forEach((o) => {
+        const date = new Date(o.timestamp)
+        const key = date.toDateString()
+        if (weekly[key]) {
+          weekly[key].sales += o.total
+          weekly[key].orderCount += 1
+          
+          const orderProfit = o.items.reduce((ps, item) => {
+            const drink = drinks.find((d) => d.id === item.id)
+            const cost = drink ? drink.ingredientCost : 0
+            return ps + (item.price - cost) * item.qty
+          }, 0)
+          weekly[key].profit += orderProfit
+        }
+      })
+      
+      return Object.values(weekly).sort((a, b) => a.order - b.order)
+    }
+    
+    const daily = {}
+    orders.forEach((o) => {
+      const date = new Date(o.timestamp)
+      const label = date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' })
+      const key = date.toDateString()
+      if (!daily[key]) {
+        daily[key] = { label, sales: 0, profit: 0, orderCount: 0, rawDate: date }
+      }
+      daily[key].sales += o.total
+      daily[key].orderCount += 1
+      
+      const orderProfit = o.items.reduce((ps, item) => {
+        const drink = drinks.find((d) => d.id === item.id)
+        const cost = drink ? drink.ingredientCost : 0
+        return ps + (item.price - cost) * item.qty
+      }, 0)
+      daily[key].profit += orderProfit
+    })
+    
+    return Object.values(daily)
+      .sort((a, b) => a.rawDate - b.rawDate)
+      .slice(-10)
+  }, [filter, orders, drinks])
+
+  const maxVal = useMemo(() => {
+    const vals = chartData.map((d) => Math.max(d.sales, d.profit))
+    const max = Math.max(...vals, 100)
+    return max * 1.15
+  }, [chartData])
+
+  return (
+    <div className="mt-4 flex flex-col">
+      <div className="mb-6 flex gap-4 text-xs font-bold">
+        <div className="flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded bg-accent"></span>
+          <span className="text-gray-600">المبيعات</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded bg-emerald-500"></span>
+          <span className="text-gray-600">الأرباح</span>
+        </div>
+      </div>
+
+      <div className="relative flex h-60 items-end gap-3 sm:gap-6 border-b border-cream-dark pb-2 overflow-x-auto min-w-[300px]">
+        {chartData.map((d, index) => {
+          const salesHeight = (d.sales / maxVal) * 100
+          const profitHeight = (d.profit / maxVal) * 100
+          
+          return (
+            <div key={index} className="group relative flex flex-1 flex-col items-center min-w-[45px]">
+              <div className="relative flex h-44 w-full items-end justify-center gap-1">
+                <div 
+                  style={{ height: `${salesHeight}%` }}
+                  className="w-3.5 sm:w-4.5 rounded-t bg-accent transition-all duration-500 group-hover:bg-accent-hover shadow-sm"
+                ></div>
+                <div 
+                  style={{ height: `${profitHeight}%` }}
+                  className="w-3.5 sm:w-4.5 rounded-t bg-emerald-500 transition-all duration-500 group-hover:bg-emerald-600 shadow-sm"
+                ></div>
+              </div>
+
+              <div className="pointer-events-none absolute bottom-48 left-1/2 z-20 w-36 -translate-x-1/2 rounded-lg bg-gray-900/95 p-2 text-center text-[10px] text-white opacity-0 transition-opacity duration-200 shadow-lg group-hover:opacity-100 border border-gray-700">
+                <p className="font-bold border-b border-gray-700 pb-1 mb-1">{d.label}</p>
+                <p>المبيعات: <span className="font-bold text-accent">{formatCurrency(d.sales)}</span></p>
+                <p>الأرباح: <span className="font-bold text-emerald-400">{formatCurrency(d.profit)}</span></p>
+                <p>الطلبات: <span className="font-bold">{d.orderCount}</span></p>
+              </div>
+
+              <span className="mt-2 text-[10px] font-bold text-gray-500 truncate max-w-full text-center">
+                {d.label}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function ReportsPage() {
   const { orders, drinks, clearLocalOrders } = useApp()
   const [reportMode, setReportMode] = useState('monthly') // 'monthly' or 'currentShift'
@@ -313,6 +456,16 @@ export default function ReportsPage() {
                   <p className={`mt-2 text-2xl font-bold ${card.color}`}>{card.value}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Sales Trend Chart */}
+            <div className="rounded-xl border border-cream-dark bg-white p-6 shadow-sm animate-page-fade">
+              <h3 className="mb-4 text-base font-bold text-gray-800 border-b pb-2 border-cream-dark">مؤشر حركة المبيعات والأرباح</h3>
+              {filteredOrders.length === 0 ? (
+                <p className="py-12 text-center text-sm text-gray-400">لا توجد بيانات مبيعات لعرض الرسم البياني في هذه الفترة</p>
+              ) : (
+                <CustomTrendChart filter={filter} orders={filteredOrders} drinks={drinks} />
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
