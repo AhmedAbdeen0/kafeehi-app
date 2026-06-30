@@ -223,11 +223,14 @@ export function AppProvider({ children }) {
       fetchDrinks()
       if (user.role === 'admin') {
         fetchInventory()
+      } else {
+        fetchPendingOrders()
       }
-      fetchPendingOrders()
 
       const interval = setInterval(() => {
-        fetchPendingOrders()
+        if (user.role !== 'admin') {
+          fetchPendingOrders()
+        }
       }, 5000)
 
       return () => clearInterval(interval)

@@ -74,7 +74,7 @@ export default function Sidebar({ isOpen, onClose }) {
                   )}
                   <Icon size={18} className={isActive ? 'text-accent' : 'text-gray-500'} />
                   <span className="flex-1">{label}</span>
-                  {to === '/' && pendingCount > 0 && (
+                  {to === '/' && user?.role !== 'admin' && pendingCount > 0 && (
                     <span className="relative flex h-5 w-5">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
                       <span className="relative flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
