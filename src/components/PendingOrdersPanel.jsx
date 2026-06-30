@@ -69,7 +69,7 @@ export default function PendingOrdersPanel() {
         </button>
 
         {expanded && (
-          <div className="space-y-2 px-6 pb-4">
+          <div className="max-h-[350px] overflow-y-auto space-y-2 px-6 pb-4">
             {pendingOrders.map((order) => (
               <div key={order.id} className="rounded-xl border border-cream-dark bg-white p-4 transition-colors duration-300 shadow-sm">
                 <div className="mb-2 flex items-start justify-between">

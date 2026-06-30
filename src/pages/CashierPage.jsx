@@ -93,7 +93,7 @@ export default function CashierPage() {
 
   return (
     <div className="flex h-full flex-col bg-cream text-gray-800 transition-colors duration-300 animate-page-fade">
-      <PendingOrdersPanel />
+      {!isAdmin && <PendingOrdersPanel />}
 
       <div className="flex flex-1 overflow-hidden" dir="ltr">
         {/* Cart Panel - Only visible for Cashier/Staff, hidden for Admin */}

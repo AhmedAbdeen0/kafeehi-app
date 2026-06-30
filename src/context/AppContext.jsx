@@ -7,6 +7,65 @@ import { api } from '../utils/api'
 
 const AppContext = createContext(null)
 
+function isGuid(str) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
+function parseCustomerName(o) {
+  if (!o) return 'زبون';
+  
+  // 1. Try direct string properties
+  const possibleNames = [
+    o.customerName,
+    o.userName,
+    o.name,
+    o.email,
+    o.customerEmail,
+    o.userEmail
+  ];
+  
+  for (const name of possibleNames) {
+    if (name && typeof name === 'string' && name.trim() !== '' && !isGuid(name)) {
+      return name.trim();
+    }
+  }
+
+  // 2. Try nested customer or user objects
+  const userObj = o.customer || o.user;
+  if (userObj) {
+    if (typeof userObj === 'string' && userObj.trim() !== '' && !isGuid(userObj)) {
+      return userObj.trim();
+    }
+    
+    if (typeof userObj === 'object') {
+      const nestedName = userObj.name || userObj.userName || userObj.username || userObj.email;
+      if (nestedName && typeof nestedName === 'string' && nestedName.trim() !== '') {
+        if (isGuid(nestedName)) {
+          const email = userObj.email || o.email;
+          if (email && typeof email === 'string' && email.includes('@')) {
+            return email.split('@')[0];
+          }
+        } else {
+          return nestedName.trim();
+        }
+      }
+    }
+  }
+
+  // 3. Fallback to GUID handling on any string field that is a GUID
+  for (const name of possibleNames) {
+    if (name && typeof name === 'string' && isGuid(name)) {
+      const email = o.email || o.customerEmail || o.userEmail || o.customer?.email || o.user?.email;
+      if (email && typeof email === 'string' && email.includes('@')) {
+        return email.split('@')[0];
+      }
+      return name.trim();
+    }
+  }
+
+  return 'زبون';
+}
+
 function getInitialState() {
   const saved = loadState()
   if (saved) {
@@ -120,7 +179,7 @@ export function AppProvider({ children }) {
             tableNumber: o.tableNumber,
             status: String(o.status || 'pending').toLowerCase(),
             customerId: String(o.customerId || o.userId || o.customer?.id || o.user?.id || ''),
-            customerName: o.customerName || o.userName || o.customer?.name || o.user?.name || 'زبون',
+            customerName: parseCustomerName(o),
             timestamp: o.createdAt ? new Date(o.createdAt) : new Date(),
             items: orderItems.map(item => ({
               id: String(item.idDrink || item.id),
