@@ -54,6 +54,17 @@ export default function PendingOrdersPanel() {
     setAmountPaid('')
   }
 
+  const handleCancelAll = async () => {
+    if (!window.confirm('هل أنت متأكد من إلغاء جميع الطلبات الواردة الحالية؟')) return
+    for (const order of pendingOrders) {
+      try {
+        await cancelCustomerOrder(order.id)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+  }
+
   return (
     <>
       <div className="border-b border-cream-dark bg-warning-bg transition-colors duration-300">
@@ -70,6 +81,14 @@ export default function PendingOrdersPanel() {
 
         {expanded && (
           <div className="max-h-[350px] overflow-y-auto space-y-2 px-6 pb-4">
+            <div className="flex justify-end pt-2 pb-1">
+              <button
+                onClick={handleCancelAll}
+                className="rounded-lg bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs font-bold transition-all duration-200 shadow-sm"
+              >
+                إلغاء جميع الطلبات ({pendingOrders.length})
+              </button>
+            </div>
             {pendingOrders.map((order) => (
               <div key={order.id} className="rounded-xl border border-cream-dark bg-white p-4 transition-colors duration-300 shadow-sm">
                 <div className="mb-2 flex items-start justify-between">
