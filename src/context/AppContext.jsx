@@ -180,6 +180,7 @@ export function AppProvider({ children }) {
             status: String(o.status || 'pending').toLowerCase(),
             customerId: String(o.customerId || o.userId || o.customer?.id || o.user?.id || ''),
             customerName: parseCustomerName(o),
+            _raw: JSON.stringify(o),
             timestamp: o.createdAt ? new Date(o.createdAt) : new Date(),
             items: orderItems.map(item => ({
               id: String(item.idDrink || item.id),

@@ -96,6 +96,11 @@ export default function PendingOrdersPanel() {
                     <p className="font-bold text-gray-900">
                       طاولة {order.tableNumber} — {order.customerName}
                     </p>
+                    {order._raw && (
+                      <div style={{fontSize: '9px', color: 'red', fontFamily: 'monospace', maxWidth: '300px', wordBreak: 'break-all'}}>
+                        Debug: {order._raw}
+                      </div>
+                    )}
                     <p className="text-xs text-gray-500">
                       {new Date(order.timestamp).toLocaleTimeString('ar-EG')}
                     </p>
