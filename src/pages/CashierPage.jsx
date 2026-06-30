@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react'
 import { Minus, Plus, Trash2, AlertTriangle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
-import PendingOrdersPanel from '../components/PendingOrdersPanel'
 import ReceiptModal from '../components/ReceiptModal'
 import Modal from '../components/Modal'
 import { formatCurrency } from '../data/mockData'
@@ -93,8 +92,6 @@ export default function CashierPage() {
 
   return (
     <div className="flex h-full flex-col bg-cream text-gray-800 transition-colors duration-300 animate-page-fade">
-      {!isAdmin && <PendingOrdersPanel />}
-
       <div className="flex flex-1 overflow-hidden" dir="ltr">
         {/* Cart Panel - Only visible for Cashier/Staff, hidden for Admin */}
         {!isAdmin && (

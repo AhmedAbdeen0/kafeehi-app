@@ -7,6 +7,7 @@ import {
   LogOut,
   Sun,
   Moon,
+  Bell,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
@@ -15,6 +16,7 @@ import { getArabicDate, getStockStatus } from '../data/mockData'
 
 const navItems = [
   { to: '/', label: 'الكاشير', icon: Calculator },
+  { to: '/table-orders', label: 'طلبات الطاولات', icon: Bell },
   { to: '/menu', label: 'المنيو', icon: Coffee },
   { to: '/inventory', label: 'المخزون', icon: Package },
   { to: '/reports', label: 'التقارير', icon: BarChart3 },
@@ -53,7 +55,15 @@ export default function Sidebar({ isOpen, onClose }) {
 
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems
-          .filter((item) => user?.role !== 'cashier' || item.to === '/')
+          .filter((item) => {
+            if (user?.role === 'admin') {
+              return item.to !== '/table-orders';
+            }
+            if (user?.role === 'cashier') {
+              return item.to === '/' || item.to === '/table-orders';
+            }
+            return true;
+          })
           .map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -74,7 +84,7 @@ export default function Sidebar({ isOpen, onClose }) {
                   )}
                   <Icon size={18} className={isActive ? 'text-accent' : 'text-gray-500'} />
                   <span className="flex-1">{label}</span>
-                  {to === '/' && user?.role !== 'admin' && pendingCount > 0 && (
+                  {to === '/table-orders' && user?.role !== 'admin' && pendingCount > 0 && (
                     <span className="relative flex h-5 w-5">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
                       <span className="relative flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">

@@ -11,6 +11,7 @@ import MenuPage from './pages/MenuPage'
 import InventoryPage from './pages/InventoryPage'
 import ReportsPage from './pages/ReportsPage'
 import CustomerOrderPage from './pages/CustomerOrderPage'
+import TableOrdersPage from './pages/TableOrdersPage'
 import ToastContainer from './components/ToastContainer'
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
             <Route element={<StaffRoute />}>
               <Route element={<Layout />}>
                 <Route index element={<CashierPage />} />
+                <Route path="table-orders" element={<TableOrdersPage />} />
               </Route>
             </Route>
 
