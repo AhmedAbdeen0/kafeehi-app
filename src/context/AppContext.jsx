@@ -89,9 +89,8 @@ export function AppProvider({ children }) {
       }
     } catch (err) {
       console.error('Failed to fetch drinks from API:', err)
-      addToast(`فشل تحميل قائمة المشروبات: ${err.message}`, 'error')
     }
-  }, [addToast])
+  }, [])
 
   const fetchInventory = useCallback(async () => {
     try {
@@ -105,9 +104,8 @@ export function AppProvider({ children }) {
       }
     } catch (err) {
       console.error('Failed to fetch inventory from API:', err)
-      addToast(`فشل تحميل المخزن: ${err.message}`, 'error')
     }
-  }, [addToast])
+  }, [])
 
   const fetchPendingOrders = useCallback(async () => {
     try {
@@ -158,19 +156,15 @@ export function AppProvider({ children }) {
       }
     } catch (err) {
       console.error('Failed to fetch pending customer orders:', err);
-      setSyncError((prev) => {
-        if (prev !== err.message) {
-          addToast(`فشل مزامنة طلبات الزبائن: ${err.message}`, 'error')
-        }
-        return err.message
-      })
     }
-  }, [addToast])
+  }, [])
 
   useEffect(() => {
     if (user) {
       fetchDrinks()
-      fetchInventory()
+      if (user.role === 'admin') {
+        fetchInventory()
+      }
       fetchPendingOrders()
 
       const interval = setInterval(() => {
