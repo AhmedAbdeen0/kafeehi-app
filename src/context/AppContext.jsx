@@ -201,44 +201,49 @@ export function AppProvider({ children }) {
           .filter(o => !clearedIds.includes(String(o.id)))
           .map(o => {
             const orderItems = o.items || [];
+            const custName = parseCustomerName(o);
+            const isMyOrder = user && (
+              String(o.customerId || o.userId || o.customer?.id || o.user?.id || '') === String(user.id) ||
+              custName === user.name ||
+              o.userName === user.name
+            );
             return {
               id: String(o.id),
-            type: 'customer',
-            tableNumber: o.tableNumber,
-            status: String(o.status || 'pending').toLowerCase(),
-            customerId: String(o.customerId || o.userId || o.customer?.id || o.user?.id || ''),
-            customerName: parseCustomerName(o),
-            timestamp: o.createdAt ? new Date(o.createdAt) : new Date(),
-            items: orderItems.map(item => ({
-              id: String(item.idDrink || item.id),
-              name: item.name,
-              price: Number(item.price || 0),
-              qty: Number(item.qty || 0)
-            })),
-            total: orderItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0)
-          };
-        });
-        setOrders((prev) => {
-          // Keep track of active customer orders in prev that did not come back in mapped.
-          // Since they are no longer in the pending list on the server, they must have been completed or cancelled.
-          const updatedPrev = prev.map((o) => {
-            if (o.type === 'customer' && ['pending', 'accepted', 'ready'].includes(o.status)) {
-              const isStillPending = mapped.some((mo) => mo.id === o.id);
-              if (!isStillPending) {
-                // If it was 'ready', it means the cashier clicked complete and received payment.
-                // Otherwise, it was rejected/cancelled.
-                return {
-                  ...o,
-                  status: o.status === 'ready' ? 'completed' : 'cancelled',
-                  completedAt: new Date(),
-                };
-              }
-            }
-            return o;
+              type: 'customer',
+              tableNumber: Number(o.tableNumber || 0),
+              status: String(o.status || 'pending').toLowerCase(),
+              customerId: isMyOrder ? user.id : String(o.customerId || o.userId || o.customer?.id || o.user?.id || ''),
+              customerName: custName,
+              timestamp: o.createdAt ? new Date(o.createdAt) : new Date(),
+              items: orderItems.map(item => ({
+                id: String(item.idDrink || item.id),
+                name: item.name,
+                price: Number(item.price || 0),
+                qty: Number(item.qty || 0)
+              })),
+              total: orderItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0)
+            };
           });
 
-          const nonCustomer = updatedPrev.filter(o => o.type !== 'customer' || o.status === 'completed' || o.status === 'cancelled');
-          return [...nonCustomer, ...mapped];
+        setOrders((prev) => {
+          // 1. Keep all non-customer orders
+          const nonCustomer = prev.filter(o => o.type !== 'customer');
+
+          // 2. Merge mapped orders from server. Overwrite local but fall back to local table number if server returns 0
+          const mergedMapped = mapped.map((mo) => {
+            const local = prev.find((lo) => lo.id === mo.id);
+            return {
+              ...mo,
+              tableNumber: mo.tableNumber || (local ? local.tableNumber : 0)
+            };
+          });
+
+          // 3. Keep local customer orders not yet returned in mapped
+          const localOnly = prev.filter(
+            (o) => o.type === 'customer' && !mergedMapped.some((mo) => mo.id === o.id)
+          );
+
+          return [...nonCustomer, ...localOnly, ...mergedMapped];
         });
       }
     } catch (err) {
@@ -514,11 +519,17 @@ export function AppProvider({ children }) {
   const updateCustomerOrderStatus = useCallback(async (orderId, status) => {
     try {
       const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1);
-      const res = await api.put(`/api/order/customer/${orderId}/status`, { status: capitalizedStatus })
+      await api.put(`/api/order/customer/${orderId}/status`, { status: capitalizedStatus })
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId || o._id === orderId ? { ...o, status } : o))
       )
-      addToast(`تم التحديث! رد السيرفر: ID=${res?.id}, Status=${res?.status}`, 'success')
+      if (status === 'accepted') {
+        addToast('تم قبول الطلب بنجاح! ☕', 'success')
+      } else if (status === 'ready') {
+        addToast('تم تجهيز الطلب وإرسال تنبيه للزبون! 🎉', 'success')
+      } else {
+        addToast('تم تحديث حالة الطلب بنجاح!', 'success')
+      }
     } catch (err) {
       console.error(err)
       addToast(`فشل تحديث حالة الطلب: ${err.message}`, 'error')
@@ -555,22 +566,23 @@ export function AppProvider({ children }) {
       setOrders((prev) => prev.map((o) => (o.id === orderId || o._id === orderId ? completed : o)))
       setInvoiceCounter((prev) => prev + 1)
       fetchInventory()
+      addToast('تم استلام الحساب وإغلاق الطلب بنجاح! 🧾', 'success')
 
       return { success: true, order: completed }
     } catch (err) {
       console.error(err)
       return { success: false, error: 'api_failed', message: err.message }
     }
-  }, [orders, invoiceCounter, user, fetchInventory])
+  }, [orders, invoiceCounter, user, fetchInventory, addToast])
 
   const cancelCustomerOrder = useCallback(async (orderId) => {
     try {
       addClearedOrderId(orderId)
-      const res = await api.put(`/api/order/customer/${orderId}/status`, { status: 'Cancelled' })
+      await api.put(`/api/order/customer/${orderId}/status`, { status: 'Cancelled' })
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId || o._id === orderId ? { ...o, status: 'cancelled' } : o))
       )
-      addToast(`تم الإلغاء! رد السيرفر: ID=${res?.id}, Status=${res?.status}`, 'success')
+      addToast('تم رفض وإلغاء الطلب بنجاح! ❌', 'success')
     } catch (err) {
       console.error(err)
       addToast(`فشل إلغاء الطلب: ${err.message}`, 'error')
