@@ -482,11 +482,11 @@ export function AppProvider({ children }) {
   const updateCustomerOrderStatus = useCallback(async (orderId, status) => {
     try {
       const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1);
-      await api.put(`/api/order/customer/${orderId}/status`, { status: capitalizedStatus })
+      const res = await api.put(`/api/order/customer/${orderId}/status`, { status: capitalizedStatus })
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId || o._id === orderId ? { ...o, status } : o))
       )
-      addToast('تم تحديث حالة الطلب بنجاح', 'success')
+      addToast(`تم التحديث! رد السيرفر: ID=${res?.id}, Status=${res?.status}`, 'success')
     } catch (err) {
       console.error(err)
       addToast(`فشل تحديث حالة الطلب: ${err.message}`, 'error')
@@ -532,11 +532,11 @@ export function AppProvider({ children }) {
 
   const cancelCustomerOrder = useCallback(async (orderId) => {
     try {
-      await api.put(`/api/order/customer/${orderId}/status`, { status: 'Cancelled' })
+      const res = await api.put(`/api/order/customer/${orderId}/status`, { status: 'Cancelled' })
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId || o._id === orderId ? { ...o, status: 'cancelled' } : o))
       )
-      addToast('تم إلغاء الطلب بنجاح', 'success')
+      addToast(`تم الإلغاء! رد السيرفر: ID=${res?.id}, Status=${res?.status}`, 'success')
     } catch (err) {
       console.error(err)
       addToast(`فشل إلغاء الطلب: ${err.message}`, 'error')
