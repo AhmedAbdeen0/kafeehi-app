@@ -25,9 +25,9 @@ export const TABLE_NUMBERS = Array.from({ length: 20 }, (_, i) => i + 1)
 
 export const ORDER_STATUS_LABELS = {
   pending: 'قيد الانتظار',
-  accepted: 'تم القبول',
+  accepted: 'مقبول',
   ready: 'جاهز',
-  completed: 'مكتمل',
+  completed: 'مكتمل (تم الدفع)',
   cancelled: 'ملغي',
 }
 

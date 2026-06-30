@@ -188,8 +188,12 @@ export function AppProvider({ children }) {
   }, [])
 
   const fetchPendingOrders = useCallback(async () => {
+    if (!user) return
     try {
-      const data = await api.get('/api/order/customer/pending')
+      const endpoint = user.role === 'cashier'
+        ? '/api/order/customer/pending'
+        : '/api/order/customer/all'
+      const data = await api.get(endpoint)
       if (data) {
         setSyncError(null)
         const clearedIds = getClearedOrderIds();
@@ -240,18 +244,22 @@ export function AppProvider({ children }) {
     } catch (err) {
       console.error('Failed to fetch pending customer orders:', err);
     }
-  }, [])
+  }, [user])
 
   useEffect(() => {
     if (user) {
       fetchDrinks()
-      if (user.role === 'admin') {
+      if (user.role === 'admin' || user.role === 'cashier') {
         fetchInventory()
-      } else {
+      }
+      if (user.role !== 'admin') {
         fetchPendingOrders()
       }
 
       const interval = setInterval(() => {
+        if (user.role === 'admin' || user.role === 'cashier') {
+          fetchInventory()
+        }
         if (user.role !== 'admin') {
           fetchPendingOrders()
         }
@@ -635,11 +643,11 @@ export function AppProvider({ children }) {
         toggleDarkMode,
         playChime: playNotificationChime,
         isDrinkInStock: (drink, quantity) => {
-          if (user?.role !== 'admin') return true
+          if (user?.role !== 'admin' && user?.role !== 'cashier') return true
           return isDrinkInStock(drink, inventory, quantity)
         },
         getMaxDrinkQty: (drink) => {
-          if (user?.role !== 'admin') return 99
+          if (user?.role !== 'admin' && user?.role !== 'cashier') return 99
           return getMaxDrinkQty(drink, inventory)
         },
       }}

@@ -112,7 +112,12 @@ export default function CustomerOrderPage() {
       setShowSuccess(true)
       setCart([])
     } else {
-      alert(`فشل إرسال الطلب: ${result.message || 'حدث خطأ ما'}`)
+      let friendlyError = result.message || 'حدث خطأ ما'
+      const errLower = friendlyError.toLowerCase()
+      if (errLower.includes('drink not found') || errLower.includes('not found') || errLower.includes('shortage') || errLower.includes('error')) {
+        friendlyError = 'عذراً، بعض المشروبات المطلوبة أو مكوناتها غير متوفرة حالياً في المخزن!'
+      }
+      alert(`فشل إرسال الطلب: ${friendlyError}`)
     }
   }
 
