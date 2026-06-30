@@ -4,6 +4,9 @@ const getHeaders = () => {
   const token = localStorage.getItem('kafeehi_token');
   const headers = {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
   };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -29,7 +32,9 @@ async function handleResponse(response) {
 
 export const api = {
   get: async (endpoint) => {
-    const res = await fetch(`${API_BASE}${endpoint}`, {
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const url = `${API_BASE}${endpoint}${separator}_cb=${Date.now()}`;
+    const res = await fetch(url, {
       method: 'GET',
       headers: getHeaders(),
     });
