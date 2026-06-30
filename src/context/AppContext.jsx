@@ -481,7 +481,8 @@ export function AppProvider({ children }) {
 
   const updateCustomerOrderStatus = useCallback(async (orderId, status) => {
     try {
-      await api.put(`/api/order/customer/${orderId}/status`, { status })
+      const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1);
+      await api.put(`/api/order/customer/${orderId}/status`, { status: capitalizedStatus })
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId || o._id === orderId ? { ...o, status } : o))
       )
@@ -502,7 +503,7 @@ export function AppProvider({ children }) {
 
     try {
       await api.put(`/api/order/customer/${orderId}/status`, {
-        status: 'completed'
+        status: 'Completed'
       })
 
       const invoiceNumber = invoiceCounter
@@ -531,7 +532,7 @@ export function AppProvider({ children }) {
 
   const cancelCustomerOrder = useCallback(async (orderId) => {
     try {
-      await api.put(`/api/order/customer/${orderId}/status`, { status: 'cancelled' })
+      await api.put(`/api/order/customer/${orderId}/status`, { status: 'Cancelled' })
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId || o._id === orderId ? { ...o, status: 'cancelled' } : o))
       )
