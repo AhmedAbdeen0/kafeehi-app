@@ -21,7 +21,7 @@ export default function CustomerOrderPage() {
   const [lastOrder, setLastOrder] = useState(null)
   const [selectedReceipt, setSelectedReceipt] = useState(null)
 
-  const enabledDrinks = drinks.filter((d) => d.enabled && getMaxDrinkQty(d) > 0)
+  const enabledDrinks = drinks.filter((d) => d.enabled)
   const filteredDrinks = enabledDrinks.filter(
     (d) => category === 'all' || d.category === category
   )
