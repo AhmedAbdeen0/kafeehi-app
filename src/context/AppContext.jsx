@@ -258,9 +258,7 @@ export function AppProvider({ children }) {
       const runSync = () => {
         if (document.visibilityState !== 'visible') return;
         fetchDrinks();
-        if (user.role === 'admin' || user.role === 'cashier') {
-          fetchInventory();
-        }
+        fetchInventory();
         if (user.role !== 'admin') {
           fetchPendingOrders();
         }
@@ -270,9 +268,7 @@ export function AppProvider({ children }) {
 
       const interval = setInterval(() => {
         if (document.visibilityState !== 'visible') return;
-        if (user.role === 'admin' || user.role === 'cashier') {
-          fetchInventory();
-        }
+        fetchInventory();
         if (user.role !== 'admin') {
           fetchPendingOrders();
         }
@@ -668,11 +664,11 @@ export function AppProvider({ children }) {
         toggleDarkMode,
         playChime: playNotificationChime,
         isDrinkInStock: (drink, quantity) => {
-          if (user?.role !== 'admin' && user?.role !== 'cashier') return true
+          if (!inventory || inventory.length === 0) return true
           return isDrinkInStock(drink, inventory, quantity)
         },
         getMaxDrinkQty: (drink) => {
-          if (user?.role !== 'admin' && user?.role !== 'cashier') return 99
+          if (!inventory || inventory.length === 0) return 99
           return getMaxDrinkQty(drink, inventory)
         },
       }}
