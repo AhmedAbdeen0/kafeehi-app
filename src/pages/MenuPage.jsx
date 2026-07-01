@@ -7,7 +7,7 @@ import { formatCurrency, CATEGORY_OPTIONS } from '../data/mockData'
 const emptyDrink = { name: '', category: 'hot', price: '', ingredientCost: 0, recipe: [] }
 
 export default function MenuPage() {
-  const { drinks, addDrink, updateDrink, deleteDrink, toggleDrink, inventory } = useApp()
+  const { drinks, addDrink, updateDrink, deleteDrink, toggleDrink, inventory, getMaxDrinkQty } = useApp()
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(emptyDrink)
@@ -132,18 +132,36 @@ export default function MenuPage() {
                 <th className="px-4 py-3 text-right font-medium">السعر</th>
                 <th className="px-4 py-3 text-right font-medium">تكلفة المكونات</th>
                 <th className="px-4 py-3 text-right font-medium">هامش الربح</th>
+                <th className="px-4 py-3 text-right font-medium">حالة التوفر</th>
                 <th className="px-4 py-3 w-28"></th>
               </tr>
             </thead>
             <tbody>
               {categoryDrinks.map((drink, index) => {
                 const profit = drink.price - drink.ingredientCost
+                const maxQty = getMaxDrinkQty(drink)
+                const isAvailable = maxQty > 0
                 return (
                   <tr key={drink.id} className={`border-t border-cream-dark dark:border-white/5 animate-item-slide delay-${Math.min(index + 1, 12)} ${!drink.enabled ? 'opacity-50' : ''} hover:bg-cream/40 dark:hover:bg-white/5 transition-colors duration-150`}>
                     <td className="px-4 py-3 font-medium">{drink.name}</td>
                     <td className="px-4 py-3">{formatCurrency(drink.price)}</td>
                     <td className="px-4 py-3">{formatCurrency(drink.ingredientCost)}</td>
                     <td className="px-4 py-3 font-medium text-profit">{formatCurrency(profit)}</td>
+                    <td className="px-4 py-3">
+                      {!drink.enabled ? (
+                        <span className="rounded bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 px-2 py-0.5 text-xs font-bold">
+                          معطل
+                        </span>
+                      ) : !isAvailable ? (
+                        <span className="rounded bg-red-150 text-red-700 dark:bg-red-950/40 dark:text-red-300 px-2 py-0.5 text-xs font-bold">
+                          غير متوفر (نفد)
+                        </span>
+                      ) : (
+                        <span className="rounded bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 px-2 py-0.5 text-xs font-bold">
+                          متوفر
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <button onClick={() => openEdit(drink)} className="rounded-lg border border-gray-200 dark:border-white/10 p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 active-press hover:scale-105 transition-all">
