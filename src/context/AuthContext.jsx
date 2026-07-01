@@ -10,6 +10,23 @@ function normalizeRole(role) {
   return 'user'
 }
 
+function isTokenExpired(token) {
+  try {
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    )
+    const payload = JSON.parse(jsonPayload)
+    return payload.exp * 1000 < Date.now()
+  } catch {
+    return true
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -18,7 +35,7 @@ export function AuthProvider({ children }) {
     const verifyToken = () => {
       const token = localStorage.getItem('kafeehi_token')
       const savedUser = localStorage.getItem('kafeehi_user')
-      if (!token || !savedUser) {
+      if (!token || !savedUser || isTokenExpired(token)) {
         localStorage.removeItem('kafeehi_token')
         localStorage.removeItem('kafeehi_user')
         setUser(null)

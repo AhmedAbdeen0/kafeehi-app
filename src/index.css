@@ -475,3 +475,28 @@ aside a.active {
   animation: cartBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-receipt-area, #print-receipt-area * {
+    visibility: visible;
+  }
+  #print-receipt-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+    border: none;
+    padding: 0;
+    background: white;
+    color: black;
+  }
+  /* Hide standard window elements during printing */
+  button, .modal-close-btn, .sidebar, header, .no-print {
+    display: none !important;
+  }
+}
+
+

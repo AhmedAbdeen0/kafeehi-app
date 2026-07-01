@@ -20,7 +20,7 @@ export default function ReceiptModal({ isOpen, onClose, order }) {
         </div>
 
         {/* Receipt Paper Container */}
-        <div className="relative w-full rounded-xl bg-cream dark:bg-sidebar/50 p-5 shadow-inner border border-cream-dark">
+        <div id="print-receipt-area" className="relative w-full rounded-xl bg-cream dark:bg-sidebar/50 p-5 shadow-inner border border-cream-dark">
           {/* Header */}
           <div className="mb-4 border-b border-dashed border-cream-dark pb-4">
             <h3 className="text-xl font-bold text-sidebar dark:text-accent">كافيهي ☕</h3>

@@ -255,24 +255,35 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     if (user) {
-      fetchDrinks()
-      if (user.role === 'admin' || user.role === 'cashier') {
-        fetchInventory()
-      }
-      if (user.role !== 'admin') {
-        fetchPendingOrders()
-      }
-
-      const interval = setInterval(() => {
+      const runSync = () => {
+        if (document.visibilityState !== 'visible') return;
+        fetchDrinks();
         if (user.role === 'admin' || user.role === 'cashier') {
-          fetchInventory()
+          fetchInventory();
         }
         if (user.role !== 'admin') {
-          fetchPendingOrders()
+          fetchPendingOrders();
         }
-      }, 5000)
+      };
 
-      return () => clearInterval(interval)
+      runSync();
+
+      const interval = setInterval(() => {
+        if (document.visibilityState !== 'visible') return;
+        if (user.role === 'admin' || user.role === 'cashier') {
+          fetchInventory();
+        }
+        if (user.role !== 'admin') {
+          fetchPendingOrders();
+        }
+      }, 5000);
+
+      document.addEventListener('visibilitychange', runSync);
+
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener('visibilitychange', runSync);
+      };
     }
   }, [user, fetchDrinks, fetchInventory, fetchPendingOrders])
 
@@ -548,8 +559,8 @@ export function AppProvider({ children }) {
 
     try {
       addClearedOrderId(orderId)
-      await api.put(`/api/order/customer/${orderId}/status`, {
-        status: 'Completed'
+      const res = await api.post(`/api/order/customer/${orderId}/complete`, {
+        amountPaid: Number(amountPaid)
       })
 
       const invoiceNumber = invoiceCounter
@@ -558,10 +569,10 @@ export function AppProvider({ children }) {
         status: 'completed',
         invoiceNumber,
         amountPaid,
-        change: amountPaid - order.total,
+        change: res?.change !== undefined ? res.change : (amountPaid - order.total),
         paymentMethod: 'cash',
         employeeId: user?.id || 'unknown',
-        employeeName: user?.name || 'كاشير',
+        employeeName: res?.employeeName || user?.name || 'كاشير',
         completedAt: new Date(),
       }
 
