@@ -248,12 +248,17 @@ export default function CustomerOrderPage() {
               <span className="text-lg font-bold">{formatCurrency(total)}</span>
               <button
                 onClick={handleSubmit}
-                disabled={!tableNumber}
+                disabled={!tableNumber || activeOrders.length >= 3}
                 className="flex-1 rounded-xl bg-accent py-3 font-bold text-white hover:bg-accent-hover disabled:opacity-50 transition-all duration-300 hover:shadow-md active-press shadow-sm"
               >
-                إرسال الطلب
+                {activeOrders.length >= 3 ? 'وصلت للحد الأقصى (3 طلبات نشطة)' : 'إرسال الطلب'}
               </button>
             </div>
+            {activeOrders.length >= 3 && (
+              <p className="mt-1.5 text-center text-xs text-red-500 font-medium">
+                يرجى الانتظار حتى يقوم الكاشير بإغلاق طلباتك السابقة قبل إرسال طلب جديد.
+              </p>
+            )}
           </div>
         </div>
       )}
