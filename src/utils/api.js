@@ -24,7 +24,7 @@ async function handleResponse(response) {
   }
 
   if (!response.ok) {
-    const errorMsg = (data && (data.message || data.error)) || 'حدث خطأ ما في الخادم';
+    const errorMsg = (data && (data.message || data.error || (typeof data === 'string' && data.trim() ? data : null))) || 'حدث خطأ ما في الخادم';
     throw new Error(errorMsg);
   }
   return data;
