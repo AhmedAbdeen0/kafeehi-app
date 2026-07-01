@@ -229,11 +229,13 @@ export function AppProvider({ children }) {
           // 1. Keep all non-customer orders
           const nonCustomer = prev.filter(o => o.type !== 'customer');
 
-          // 2. Merge mapped orders from server. Overwrite local but fall back to local table number if server returns 0
+          // 2. Merge mapped orders from server. Overwrite local but fall back to local table number, items, and total if server returns empty/0 due to backend include bugs
           const mergedMapped = mapped.map((mo) => {
             const local = prev.find((lo) => lo.id === mo.id);
             return {
               ...mo,
+              items: mo.items && mo.items.length > 0 ? mo.items : (local ? local.items : []),
+              total: mo.total || (local ? local.total : 0),
               tableNumber: mo.tableNumber || (local ? local.tableNumber : 0)
             };
           });
